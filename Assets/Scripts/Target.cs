@@ -44,7 +44,7 @@ public class Target : MonoBehaviour
     {
         
     }
-    private void OnDestroy()
+    public void Explode()
     {
         Instantiate(_explosionVfx, transform.position, transform.rotation);
     }
