@@ -9,11 +9,22 @@ public class GameManager : MonoBehaviour
 {
     [SerializeField] private List<GameObject> _targets;
     [SerializeField] private float _spawnRate = 1f;
+    [SerializeField] private int _lives = 3;
     private int _totalScore = 0;
     [SerializeField] private IntEventChannelSO _onScoreChange;
+    [SerializeField] private IntEventChannelSO _onLiveMinus;
+    [SerializeField] private IntEventChannelSO _onLiveChange;
     [SerializeField] private InputSystem_Actions _inputSystem;
     [SerializeField] private BoolEventChannelSO _onGameOver;
+    [SerializeField] private VoidEventChannelSO _onGameRestart;
+    // Pause event
+    [SerializeField] private VoidEventChannelSO _onResumeGame;
+    [SerializeField] private BoolEventChannelSO _onPauseGame;
+    [SerializeField] private VoidEventChannelSO _onQuitGame;
     [SerializeField] private GameObject _titleScreen;
+    // Target Event
+    [SerializeField] private IntEventChannelSO _onTargetHit;
+    [SerializeField] private VoidEventChannelSO _onBombHit;
     private bool _isGameActive = false;
 
     private void Awake()
@@ -23,48 +34,52 @@ public class GameManager : MonoBehaviour
     private void OnEnable()
     {
         _inputSystem.Enable();
-
-        _inputSystem.UI.Click.performed += OnLeftClick;
+        _inputSystem.UI.Pause.performed += OnPauseGame;
+        _onLiveMinus.OnEventRaised += OnLiveMinus;
+        _onGameRestart.OnEventRaised += OnRestartGame;
+        _onResumeGame.OnEventRaised += OnResumeGame;
+        _onQuitGame.OnEventRaised += OnQuitGame;
+        _onBombHit.OnEventRaised += OnBombHit;
+        _onTargetHit.OnEventRaised += OnTargetHit;
 
     }
 
     private void OnDisable()
     {
-        _inputSystem.UI.Click.performed -= OnLeftClick;    
+        _inputSystem.UI.Pause.performed -= OnPauseGame;
+        _onLiveMinus.OnEventRaised -= OnLiveMinus;
+        _onGameRestart.OnEventRaised -= OnRestartGame;
+        _onResumeGame.OnEventRaised -= OnResumeGame;
+        _onQuitGame.OnEventRaised -= OnQuitGame;
+        _onBombHit.OnEventRaised -= OnBombHit;
+        _onTargetHit.OnEventRaised -= OnTargetHit;
         _inputSystem.Disable();
     }
 
-    private void OnLeftClick(InputAction.CallbackContext callback)
+
+    private void OnTargetHit(int score)
+    {
+        if (!_isGameActive) 
+        {
+            return;
+        }
+        _totalScore += score;
+        _onScoreChange?.RaiseEvent(_totalScore);
+    }
+
+    private void OnBombHit()
     {
         if(!_isGameActive)
         {
             return;
         }
-        Ray ray =
-        Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-        Debug.DrawRay(ray.origin, ray.direction * 100f, Color.rebeccaPurple, 2f);
-        if(Physics.Raycast(ray, out RaycastHit hit))
-        {
-            Target target = hit.collider.gameObject.GetComponent<Target>();
-            if(target == null)
-            {
-                return;
-            }
-            else if(target.gameObject.CompareTag("Bomb"))
-            {
-                _onGameOver.RaiseEvent(true);
-                _isGameActive = false;
-                target.Explode();
-                Destroy(target.gameObject);
-            }
-            else
-            {
-                _totalScore += target.GetScore();
-                _onScoreChange?.RaiseEvent(_totalScore);
-                target.Explode();
-                Destroy(target.gameObject);
-            }
-        }
+        GameOver();
+    }
+
+    private void GameOver()
+    {
+        _onGameOver.RaiseEvent(true);
+        _isGameActive = false;
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -87,9 +102,46 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void RestartGame()
+    private void OnRestartGame()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+    
+    private void OnLiveMinus(int live)
+    {
+        if(!_isGameActive)
+        {
+            return;
+        }
+        _lives += live;
+        _onLiveChange.RaiseEvent(_lives);
+        if(_lives <= 0)
+        {
+            GameOver();
+        }
+    }
+
+    private void OnPauseGame(InputAction.CallbackContext context)
+    {
+        _onPauseGame.RaiseEvent(true);
+        Time.timeScale = 0f;
+    }
+
+    private void OnQuitGame()
+    {
+        // 1. If running inside the Unity Editor
+        #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+            
+        // 2. If running as a standalone built application (Windows, Mac, Mobile, etc.)
+        #else
+            Application.Quit();
+        #endif
+    }
+
+    private void OnResumeGame()
+    {
+        Time.timeScale = 1f;
     }
 
     public void StartGame(int difficulty)
@@ -98,6 +150,7 @@ public class GameManager : MonoBehaviour
         _isGameActive = true;
         _totalScore = 0;
         _onScoreChange.RaiseEvent(_totalScore);
+        _onLiveChange.RaiseEvent(_lives);
         StartCoroutine(SpawnTarget());
         _titleScreen.SetActive(false);
     }
