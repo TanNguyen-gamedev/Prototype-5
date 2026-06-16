@@ -7,13 +7,14 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] private List<GameObject> targets;
+    [SerializeField] private List<GameObject> _targets;
     [SerializeField] private float _spawnRate = 1f;
     private int _totalScore = 0;
     [SerializeField] private IntEventChannelSO _onScoreChange;
     [SerializeField] private InputSystem_Actions _inputSystem;
     [SerializeField] private BoolEventChannelSO _onGameOver;
-    private bool _isGameActive = true;
+    [SerializeField] private GameObject _titleScreen;
+    private bool _isGameActive = false;
 
     private void Awake()
     {
@@ -69,7 +70,6 @@ public class GameManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        StartCoroutine(SpawnTarget());   
     }
 
     // Update is called once per frame
@@ -83,13 +83,23 @@ public class GameManager : MonoBehaviour
         while(_isGameActive)
         {
             yield return new WaitForSeconds(_spawnRate);
-            Instantiate(targets[Random.Range(0, targets.Count)]);
+            Instantiate(_targets[Random.Range(0, _targets.Count)]);
         }
     }
 
     public void RestartGame()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void StartGame(int difficulty)
+    {
+        _spawnRate /= difficulty;
+        _isGameActive = true;
+        _totalScore = 0;
+        _onScoreChange.RaiseEvent(_totalScore);
+        StartCoroutine(SpawnTarget());
+        _titleScreen.SetActive(false);
     }
 
 }
