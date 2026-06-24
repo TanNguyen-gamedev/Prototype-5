@@ -17,7 +17,7 @@ public class HUD : MonoBehaviour
     private void OnEnable()
     {
         _onScoreChange.OnEventRaised += OnScoreChange;
-        _onGameOver.OnEventRaise += OnGameOver;
+        _onGameOver.OnEventRaised += OnGameOver;
         _onLiveChange.OnEventRaised += OnLiveChange;
         if(_restartButton != null)
         {
@@ -28,7 +28,7 @@ public class HUD : MonoBehaviour
     private void OnDisable()
     {
         _onScoreChange.OnEventRaised -= OnScoreChange;
-        _onGameOver.OnEventRaise -= OnGameOver;
+        _onGameOver.OnEventRaised -= OnGameOver;
         _onLiveChange.OnEventRaised -= OnLiveChange;
         if(_restartButton != null)
         {

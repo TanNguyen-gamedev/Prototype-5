@@ -18,7 +18,7 @@ public class PauseMenu : MonoBehaviour
     [SerializeField] private GameObject _panel;
     private void OnEnable()
     {
-        _onPauseGame.OnEventRaise += OnGamePause;
+        _onPauseGame.OnEventRaised += OnGamePause;
         if(_restartButton != null)
         {
             _restartButton.onClick.AddListener(OnRestartGame);
@@ -38,7 +38,7 @@ public class PauseMenu : MonoBehaviour
     }
     private void OnDisable()
     {
-        _onPauseGame.OnEventRaise -= OnGamePause;
+        _onPauseGame.OnEventRaised -= OnGamePause;
         if(_restartButton != null)
         {
             _restartButton.onClick.RemoveListener(OnRestartGame);

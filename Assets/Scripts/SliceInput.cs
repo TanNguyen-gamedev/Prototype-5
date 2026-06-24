@@ -23,14 +23,14 @@ public class SliceInput : MonoBehaviour
         _inputSystem.Enable();
         _inputSystem.UI.Click.performed += OnClick;
         _inputSystem.UI.Click.canceled += OnRelease;
-        _onGameOver.OnEventRaise += OnGameOver;
+        _onGameOver.OnEventRaised += OnGameOver;
     }
 
     private void OnDisable()
     {
         _inputSystem.UI.Click.performed -= OnClick;
         _inputSystem.UI.Click.canceled -= OnRelease;
-        _onGameOver.OnEventRaise -= OnGameOver;
+        _onGameOver.OnEventRaised -= OnGameOver;
         _inputSystem.Disable();
     }
 
